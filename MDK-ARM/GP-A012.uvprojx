@@ -311,7 +311,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>4</Optim>
+            <Optim>2</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -536,11 +536,6 @@
           <GroupName>App</GroupName>
           <Files>
             <File>
-              <FileName>adc_data_js.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Source\adc_data_js.c</FilePath>
-            </File>
-            <File>
               <FileName>app_main.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Source\app_main.c</FilePath>
@@ -579,6 +574,11 @@
               <FileName>user_uart_dma.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Source\user_uart_dma.c</FilePath>
+            </File>
+            <File>
+              <FileName>FFT.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Source\FFT.c</FilePath>
             </File>
           </Files>
         </Group>

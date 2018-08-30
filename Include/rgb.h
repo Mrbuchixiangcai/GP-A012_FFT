@@ -52,7 +52,10 @@ void FireMode_Handle(void);
 
 
 //外部调用_变量定义variable definition//
-extern uint16_t volValueData[50];		  //采集到的初步电压值
+#define ADC_DMA_SIZE 32
+extern uint16_t AdcDma_Buf[ADC_DMA_SIZE];		  //采集到的初步电压值
+extern uint16_t AdcAudio_Buf[ADC_DMA_SIZE];		  //采集到的初步电压值
+extern uint16_t volValueData[ADC_DMA_SIZE];		  //采集到的初步电压值
 extern uint16_t ADCVolValue;
 extern uint16_t ADCVolValue_bk;
 extern uint16_t ADCDifferenceValue;

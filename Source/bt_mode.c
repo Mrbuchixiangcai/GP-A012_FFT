@@ -154,20 +154,20 @@ void BlueMode_Receive(void)
 			   (BT_ReceiveBuffer[3]=='5')&&(BT_ReceiveBuffer[5]=='T'))
 			{//app到mcu随音乐闪动，脉动模式
 				fireSize=char_to_bcd(BT_ReceiveBuffer[6],BT_ReceiveBuffer[7]);
-				if(fireSize==1)
-				{
-					FireSize1_bk=FireSize1;
-					FireSize1=MODE4_FLASHING;
-					if(HAL_ADC_Start_DMA(&hadc, (uint32_t*)volValueData, 10) != HAL_OK)
-					{
-						_Error_Handler(__FILE__, __LINE__);
-					}
-				}
-				else if(fireSize==0)
-				{
-					FireSize1=((FireSize1_bk==0)?MODE1_SMALL_FIRE1:FireSize1_bk);
-					HAL_ADC_Stop_DMA(&hadc);
-				}
+//kevin 				if(fireSize==1)
+//kevin 				{
+//kevin 					FireSize1_bk=FireSize1;
+//kevin 					FireSize1=MODE4_FLASHING;
+//kevin 					if(HAL_ADC_Start_DMA(&hadc, (uint32_t*)volValueData, 64) != HAL_OK)
+//kevin 					{
+//kevin 						_Error_Handler(__FILE__, __LINE__);
+//kevin 					}
+//kevin 				}
+//kevin 				else if(fireSize==0)
+//kevin 				{
+//kevin 					FireSize1=((FireSize1_bk==0)?MODE1_SMALL_FIRE1:FireSize1_bk);
+//kevin 					HAL_ADC_Stop_DMA(&hadc);
+//kevin 				}
 				return;
 			}
 			if((BT_ReceiveBuffer[0]=='B')&&(BT_ReceiveBuffer[1]=='0') &&(BT_ReceiveBuffer[2]=='0')&&

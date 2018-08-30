@@ -44,4 +44,4 @@ gp-a012\sn3236.o: ..\Include\IO_IIC.h
 gp-a012\sn3236.o: ..\Include\SN3236.h
 gp-a012\sn3236.o: ..\Include\Key.h
 gp-a012\sn3236.o: ..\Include\rgb_array.h
-gp-a012\sn3236.o: ..\Include\adc_data_js.h
+gp-a012\sn3236.o: ..\Include\fft.h

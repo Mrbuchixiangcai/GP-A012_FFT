@@ -115,7 +115,7 @@ void SysTick_Handler(void) {
   BlueMode_Receive();
   //	}
   AppTick1ms = 1;
-  if (++cntAppTick >= 6)
+  if (++cntAppTick >= 50)
     cntAppTick = 0;
   if (cntAppTick == 0)
     AppTick0 = 1;
@@ -125,9 +125,7 @@ void SysTick_Handler(void) {
     AppTick2 = 1;
   if (cntAppTick == 3)
     AppTick3 = 1;
-  if (cntAppTick == 4)
-    AppTick3 = 1;
-  if (cntAppTick == 5)
+  if ((cntAppTick >= 5) && (cntAppTick<=50))
     AppTick5 = 1;
 
   /* USER CODE END SysTick_IRQn 1 */
@@ -168,11 +166,12 @@ void EXTI4_15_IRQHandler(void) {
  */
 void DMA1_Channel1_IRQHandler(void) {
   /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
-
+  extern uint8_t Adc_Dma_Irq_f;
   /* USER CODE END DMA1_Channel1_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_adc);
   /* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
-  ADCGetBuffer();
+//kevin  ADCGetBuffer();
+   Adc_Dma_Irq_f=1;
   /* USER CODE END DMA1_Channel1_IRQn 1 */
 }
 

@@ -1703,7 +1703,6 @@ void Array_CampFire(void)//Ğ¡»ğ
 			}
 		}
 		
-		
 		if(++step>=61)
 			step=0;
 	}

@@ -17,6 +17,9 @@ uint8_t   cntKeyLoop;     //计数按键循环，短按，长按，超长按的按下时间
 uint8_t   KeyCurValueBK;  //当前按键值备份
 uint8_t   cntKeyLong;
 uint8_t   keyNum;
+uint8_t   keyBT;
+uint8_t   keyBT_bk;
+
 
 
 static    uint8_t   KeyCurValue; //按键电压当前值，current当前的
@@ -47,7 +50,7 @@ uint8_t SPASongs_Num_Table[4][11]=
 uint8_t GetKeyValue(void)
 {
 //	uint8_t  i;
-	uint8_t  KeyNum=0;
+	uint8_t  keyValue=0;
 //	AdcValue=HAL_ADC_GetValue(&hadc);//PA0获取当前按键IO pin电压值,第一次获取时可能不对，转换时间不够
 //	if(AdcValue<0x00A0)//采集到的任意按键电压值要小于0x00A0
 //	{
@@ -61,13 +64,25 @@ uint8_t GetKeyValue(void)
 //			}
 //		}
 //	}
+	keyBT = BT_POWER();
+
 	if(!KEY_LIGHT())//灯光按键
-		KeyNum=T_LIGHT;
-//	if((!KEY_LIGHT()) && (BT_POWER()))
-//		KeyNum=T_LIGHT;
-//	else if(BT_POWER())
-//		KeyNum=T_BT_POWER;
-	return KeyNum;//返回按键
+		keyValue = T_LIGHT;
+	if (keyBT_bk != keyBT)//每次蓝牙检测IO口产生变化时才能进入，不然一直高电平就一直进入
+	{
+		keyBT_bk = keyBT;
+		if ((!KEY_LIGHT()) && (keyBT))//如果灯光按键按下和power按键长按后同时产生作用，那就定义为灯光按键
+			keyValue = T_LIGHT;				  //比如一直按着Light，再按power，就是灯光
+		else
+		{
+			if (keyBT)
+				PlayMode = PLAY_BT;
+			else
+				PlayMode = PLAY_OFF;
+		}
+	}
+	
+	return keyValue;//返回按键
 }
 
 //被调用时接收的是GetKeyValue()的返回值  一般固定，不更改
@@ -143,7 +158,6 @@ void KeyEventPorc(uint8_t KeyTmp)
 void KeyScan(void)
 {
 	KeyEventPorc(GetKeyValue());
-	
 }
 
 //按键处理
@@ -151,8 +165,6 @@ void KeyComMsg(void)
 {
 	if(gbKeyPress)
 	{
-		if(PlayMode==PLAY_OFF)
-			PlayMode=PLAY_ON;
 		switch(KeyValue)
 		{
 //			case KU(T_BT_POWER):
@@ -170,7 +182,7 @@ void KeyComMsg(void)
 				if(PlayMode==PLAY_BT)
 				{
 					
-					if(keyNum==0)
+					if(keyNum==0) 
 					{	
 						FireSize1=MODE1_SMALL_FIRE1;
 						keyNum=1;
@@ -184,31 +196,43 @@ void KeyComMsg(void)
 					{	
 						FireSize1=MODE4_FLASHING;
 						keyNum=3;
+						   
 					}
 					else if(keyNum==3)
 					{	
 						FireSize1=MODE0_OFF_FIRE;
-						if(keyBT==1)
-							PlayMode=PLAY_BT;
-						else
-							PlayMode=PLAY_OFF;
 						keyNum=0;
 					}
+
+//kevin 					if(FireSize1==MODE4_FLASHING)
+//kevin 					{
+//kevin 						if(HAL_ADC_Start_DMA(&hadc, (uint32_t*)volValueData, 64) != HAL_OK)
+//kevin 						{
+//kevin 							_Error_Handler(__FILE__, __LINE__);
+//kevin 						}
+//kevin 					}
+//kevin 				else 
+//kevin 					{
+//kevin 					if (HAL_ADC_Stop_DMA(&hadc) != HAL_OK) 
+//kevin 						{
+//kevin 						_Error_Handler(__FILE__, __LINE__);
+//kevin 						}
+//kevin 					}
+					
 				}
-				else if(PlayMode==PLAY_ON)//蓝牙关机情况打开lihgt，只有小火和关闭两种情况
+				else if(PlayMode!=PLAY_BT)//蓝牙关机情况打开lihgt，只有小火和关闭两种情况
 				{
-					//PlayMode=PLAY_ON;
 					if(keyNum==0)
 					{	
 						FireSize1=MODE1_SMALL_FIRE1;
 						keyNum=1;
-						
+						PlayMode = PLAY_ON;
 					}
 					else
 					{	
 						FireSize1=MODE0_OFF_FIRE;
-						PlayMode=PLAY_OFF;
 						keyNum=0;
+						PlayMode = PLAY_OFF;
 					}
 				}
 				Usart1SendData_DMA(&SPASongs_Num_Table[keyNum][0]);

@@ -1,137 +1,307 @@
+//参考网址：https://www.cnblogs.com/luoqingyu/p/5930181.html#top
+
+/**********************************************************************************************************************************************
+* 这里讲讲傅立叶快速变换FFT算法的C例程，不恰当的地方还请探讨。
+* 此例程可以移植到任何的单片机，但前提是单片机内存要够大(如果做32点的应该256字节内存就足够了)，至于速度快或慢，只要你能承受那些慢速的就无所谓。
+* 这里以128点采样作为例子。要注意的是，采样点数N和采样率Fs还有信号频率F的关系。
+* FFT算法可以把对波形采样回来的数据进行转换，比如有一个模拟信号过来，假设对其以某个采样率采样了128个点的数据，经过FFT换算以后，就可以获得这段
+* 波形里面含有的不同频率的特征，也就是变成频谱。换算的结果是以复数的形式表现的，比如某个频率的信息以a＋bi的形式表示，这里a是实部，b是虚部。
+* 而例程中会以数组s16 Fft_Real[128]来表示128个频率的实部，以s16 Fft_Image[128]来表示128个频率的虚部。
+* 采样点数N和采样率Fs还有信号频率F的关系是这样的，在一个模拟信号中，采样率至少应该是这个信号中需要分析的最高频率的2倍，而这个信号中需要分析的
+* 最低频率Fl＝Fs/N，也就是采样率除以采样点数，同时这个频率也是fft换算过程的频率分辩率。可能有点晕了，这里举例说明。
+* 假设我们有一个信号里面含有100Hz的信号和含有1000Hz的信号叠加在一起，用示波器是很难分清的，通过对这信号进行采样和FFT转换就可以得到这组信号的
+* 频谱特征，因为需要分析的最低信号为100Hz，我们假设现在对信号要进行128点的采样，那么我们至少要能分辨100Hz的信号，采样率可以是100Hzx128点＝12800Hz，
+* 也就是我们需要以每秒采集12800点的速度来采集1/100秒的时间(因为只采集128点，所以时间上是1/100秒)，当然也可以使用6400Hz的采样率，这样分辩率是50Hz，
+* 这里就以12800Hz为例。
+* 采集回来的数据要怎么处理呢？首先对于FFT算法，需要有数组数据输入，经过FFT换算以后会以数组数据输出。我们可以直接定义两个数组s16 Fft_Real[128]和
+* s16 Fft_Image[128]，我们把采集来的128个数据按一个特殊的顺序输入到s16 Fft_Real[128]这个数组里面(当作实部输入)，而s16 Fft_Image[128]则全部输入0，
+* 然后运行fft算法转换。转换过后，s16 Fft_Real[128]里面的128个数会变成128个频率的实部，而s16 Fft_Image[128]里面的128个数会变成128个频率的虚部。
+* 哪128个频率呢，实际上只能获得64个频率。在这两个输出的数组里面，数组s16 Fft_Real[128]的第一个数(第一个数是s16 Fft_Real[0])和s16 Fft_Image[128]
+* 的第一个数(第一个数是s16 Fft_Image[0])分别是0Hz这个频率的复数形式结果里面的实部和虚部，而第二个数是100Hz的复数形式的结果，第三个数是200Hz的结果，
+* 依此类推，第64个数是6300Hz的结果。假如我们想知道信号中是否含有100Hz这个频率存在，那么我们需要查看s16 Fft_Real[1]和s16 Fft_Image[1]这两个数，
+* 把实部和虚部分别进行平方求和以后再开平方，就是100Hz信号的模，把模值除以采样点数N的1/2就得到100Hz的信号的峰值。同理，要知道信号里面是否含有1000Hz，
+* 我们需要取出s16 Fft_Real[10]和s16 Fft_Image[10]来计算。这128组数据里面，只有前面64组是有用的，后面的都是镜像数据，我们不理会。因为采样率是12800Hz，
+* 我们能查看的最高频率是6400Hz，也就是需要拿s16 Fft_Real[64]和s16 Fft_Image[64]出来算，但这两个值很可能不再准确，因为是极限的问题。
+*
+* 以下我们来看看相关的例程，这个例程可以用于移植到任何的单片机中，只要单片机的速度不太慢(太慢你愿意慢慢等也没关系)，内存足够就可以运行。这个例程可以
+* 修改为256点和512点或者1024点甚至更高点数的fft，下面会讲到需要修改一些什么参数。增加采样点数可以在采样率不变的情况下增加分辩率，如果点数增加一倍，
+* 采样率也提高一倍，那么分辩率不变，但能识别的最高频率将提高一倍，这是采样点数增加的好处，但同时会减慢运算速度。此例程使用stm32f103在72M主频下测试256点fft,
+* 运算时间为10mS左右，官方的函数库不知道会不会经过优化而更快，但考虑到许多人不喜欢使用函数库，也考虑这个例程的可移植性，这里直接使用fft函数而不讲函数库的内容。
+*********************************************************************************************************************************************/
+
+//头文件header file//
 #include "app_main.h"
+#include "math.h"
+#include "stdlib.h"
+
+//宏定义macro definition//
+
+//类型定义byte definition//
+
+//变量定义variable definition//
+uint16_t fft_Real[NUM_FFT]; //FFT实部，64数组
+uint16_t fft_Image[NUM_FFT];//FFT虚部，64数组
+uint8_t  calculateSW = 0;   //计算转换
 
 
+/*************************************************************************************
+* 以下为放大128倍后的sin正弦函数数组表格，这个表格可以用“正弦波表生成”这个软件来生成
+* ，要注意需要做多少点的fft，就需要生成多少点的。
+* 数据类型要选择整形，不要选择正整型，这里为了能在普通单片机快速运行，不使用浮点数，使
+* 用查表法以达到最快的运算。如果是256点以上的，表格数据类型s8要改成s16的，以下的两个数
+* 组表格也同样如此，注意这里相当于指针用法，如果内存足够的，最好把表格写入内存，那样运
+* 行速度快，如果内存资源紧的，就把表格写入程序区，对于51就是一个
+* signed char code table[N]和signed char table[N]的区别，带了code就告诉编译器我这个表
+* 格要放在ROM程序存储区，不带code就直接放入内存，其他单片机不同写法自己研究研究
 
-uint8_t  p;
-uint16_t temp_Real, temp_Image, temp;
+解释扩大的原因，参考网址：https://www.cnblogs.com/luoqingyu/p/5930181.html#top
+---3.浮点到定点转换需要注意的关键问题，简单说：大多数嵌入式系统对浮点运算支持甚微，因此
+在嵌入式系统中进行离散傅里叶变换一般都应该采用定点方式。对于简单的DFT运算从浮点到定点显
+得非常容易
+* ************************************************************************************/
+const int8_t SIN_TAB[32]= 
+{ 
+	//0x00, 0x0c, 0x18, 0x24, 0x30, 0x3b, 0x46, 0x50,
+	//0x59, 0x62, 0x69, 0x70, 0x75, 0x79, 0x7c, 0x7e,
+	//0x7f, 0x7e, 0x7c, 0x79, 0x75, 0x70, 0x69, 0x62,
+	//0x59, 0x50, 0x46, 0x3b, 0x30, 0x24, 0x18, 0x0c,
+	0x00,0x18,0x30,0x46,0x59,0x69,0x75,0x7c,
+	0x7f,0x7c,0x75,0x69,0x59,0x46,0x30,0x18,
+	0x00,-0x18,-0x30,-0x47,-0x5a,-0x6a,-0x76,-0x7d,
+	-0x80,-0x7d,-0x76,-0x6a,-0x5a,-0x47,-0x30,-0x18,
+};
+//以下是放大128倍后的cos余弦函数数组表格，这里注意事项与上面相同，只不过选择余弦来生成
+const int8_t COS_TAB[32]= 
+{ 
+	// 0x7f,  0x7e,  0x7c,  0x79,  0x75,  0x70,  0x69,  0x62,
+	// 0x59,  0x50,  0x46,  0x3b,  0x30,  0x24,  0x18,  0x0c,
+	// 0x00, -0x0c, -0x18, -0x24, -0x30, -0x3b, -0x46, -0x50,
+	//-0x59, -0x62, -0x69, -0x70, -0x75, -0x79, -0x7c, -0x7e,
+	0x7f,0x7c,0x75,0x69,0x59,0x46,0x30,0x18,
+	0x00,-0x18,-0x30,-0x47,-0x5a,-0x6a,-0x76,-0x7d,
+	-0x80,-0x7d,-0x76,-0x6a,-0x5a,-0x47,-0x30,-0x18,
+	0x00,0x18,0x30,0x46,0x59,0x69,0x75,0x7c,
 
-FFT_ImageClear();
-for (i = 1; i <= N; i++)//for(1)
+};
+
+/************************************************************************************
+* 以下是采样存储序列表，这个表格可以在FFT_Code_Tables.h这个文件里面找到，更多点的FFT
+* 也在里面找，就是里面的unsigned int code BRTable[N]的那些，是用来控制采样点数据输入
+* 到实部数组s16 Fft_Real[NUM_FFT]里面的
+* ************************************************************************************/
+const uint8_t LIST_TAB[32]= 
 {
-	b = 1;
-	b <<= (i - 1);//蝶式运算，用于计算隔多少行计算，例如第一级，1和2行计算，第二级
-	for (j = 0; j <= (b - 1); j++)//for(2)
+	0, 16, 8, 24, 4, 20, 12, 28,
+	2, 18, 10, 26, 6, 22, 14, 30,
+	1, 17, 9, 25, 5, 21, 13, 29,
+	3, 19, 11, 27, 7, 23, 15, 31
+};
+
+//标志未定义flags definetion//
+uint8_t  Flag_FFT_Handle = 0;
+uint8_t  Flag_FFTSwitch  = 0;     //FFT转换开关
+
+//函数声明Function declaration//
+
+//函数定义function definetion//
+/*******************************************************************
+函数原型：
+输入参数：
+输出参数：
+函数功能：fft虚部清零函数，在运行FFT函数之前需要先运行这个
+*******************************************************************/
+void FFT_ImageClear(void) //fft虚部清零函数，在运行FFT函数之前需要先运行这个
+{
+	volatile uint8_t cnt;
+	for (cnt = 0; cnt < NUM_FFT; cnt++)
 	{
-		p = 1;
-		p <<= (N - i);
-		p = p * j;
-		for (k = j; k<NUM_FFT; k = (k + (2 * b)))//for(3)基二FFT
+		fft_Image[cnt] = 0;
+	}
+}
+
+/*******************************************************************
+函数原型：
+输入参数：
+输出参数：
+函数功能：以下为fft算法主体部分
+*******************************************************************/
+void FFT(void)
+{
+	uint8_t  i;      //i用于表示蝶形图级联的阶数
+	uint8_t  j;      //j表示蝶形分组起始点序列，蝶形分组跨度为2^i
+	uint8_t  k;      //k表示蝶形组内偶数分支序列点号
+	uint8_t  b;      //蝶形分组跨度
+	uint8_t  p;      //
+	int16_t  temp_Real, temp_Image;//temp;
+	//uint16_t max, min;
+	//uint32_t sum;
+	//static uint16_t count = 0;
+	//static uint16_t Vrms[NUM_FFT];//峰峰值电压数组
+
+	if (Flag_FFTSwitch == 1)
+	{
+		FFT_ImageClear();  //每次转换计算都要先清除上一次可能留下来的虚部的数据，防止出错
+		for (i = 1; i <= L; i++)
 		{
-			temp_Real = FFT_Real[k];
-			temp_Image = FFT_Image[k];
-			temp = FFT_Real[k + b];
-			FFT_Real[k] = FFT_Real[k] + ((FFT_Real[k + b] * COS_TAB[p]) >> 7) + ((FFT_Image[k + b] * SIN_TAB[p]) >> 7);
-			FFT_Image[k] = FFT_Image[k] - ((FFT_Real[k + b] * SIN_TAB[p]) >> 7) + ((FFT_Image[k + b] * COS_TAB[p]) >> 7);
-			FFT_Real[k + b] = temp_Real - ((FFT_Real[k + b] * COS_TAB[p]) >> 7) - ((FFT_Image[k + b] * SIN_TAB[p]) >> 7);
-			FFT_Image[k + b] = temp_Image + ((temp*SIN_TAB[p]) >> 7) - ((FFT_Image[k + b] * COS_TAB[p]) >> 7);
-			//移位，防止溢出，结果已经是本值的1/64
-			FFT_Real[k] >>= 1;
-			FFT_Image[k] >>= 1;
-			FFT_Real[k + b] >>= 1;
-			FFT_Image[k + b] >>= 1;
+			b = 1;
+			b <<= (i - 1); //蝶式运算，用于计算隔多少行计算，例如第一级1和2行计算，，，，第二级
+			for (j = 0; j <= (b - 1); b++)
+			{这里错了
+				p = 1;
+				p <<= (L - i);
+				p = p * j;
+				for (k = j; k < NUM_FFT; k = (k + 2 * b)) //完成一组内的所有蝶形运算 
+				{
+					temp_Real = fft_Real[k];
+					temp_Image = fft_Image[k];
+					//temp = fft_Real[k + b];
+					fft_Real[k]      = fft_Real[k]  + ((fft_Real[k + b] * COS_TAB[p]) >> (L+1)) + ((fft_Image[k + b] * SIN_TAB[p]) >> (L+1));
+					fft_Image[k]     = fft_Image[k] - ((fft_Real[k + b] * SIN_TAB[p]) >> (L+1)) + ((fft_Image[k + b] * COS_TAB[p]) >> (L+1));
+					fft_Real[k + b]  = temp_Real    - ((fft_Real[k + b] * COS_TAB[p]) >> (L+1)) - ((fft_Image[k + b] * SIN_TAB[p]) >> (L+1));
+					fft_Image[k + b] = temp_Image   + ((fft_Real[k + b] * SIN_TAB[p]) >> (L+1)) - ((fft_Image[k + b] * COS_TAB[p]) >> (L+1));
+					//移位，防止溢出，结果已解释本值的1/NUM_FFT
+					fft_Real[k]  >>= 1;
+					fft_Image[k] >>= 1;
+					fft_Real[k + b]  >>= 1;
+					fft_Image[k + b] >>= 1;
+					calculateSW=p;
+				}
+			}
 		}
+		fft_Real[0] = fft_Image[0] = 0;//去掉直流分量，
+		Flag_FFT_Handle = 1;//这个标志位是处理FFT转换之后的数据处理，为什么不放在这里呢，还要再开一个函数？因为处理FFT就
+							//很长时间了，下面的数据处理(FFT_Handle())要平方再开方，占资源，占空间(可能)，所以另开一个
+		Flag_FFTSwitch = 0;
 	}
-}
-//	for(uint8_t vpeakCnt=0;vpeakCnt<12;vpeakCnt++)//求对应点的模值
-//	{
-//		//Vpeak[vpeakCnt]=(uint16_t)(sqrt(pow(FFT_Real[vpeakCnt],2)+pow(FFT_Image[vpeakCnt],2)));
-//		Vpeak[vpeakCnt]=sqrt((FFT_Real[vpeakCnt]*FFT_Real[vpeakCnt]) + (FFT_Image[vpeakCnt]*FFT_Image[vpeakCnt]));
-//	}
-//	for(uint8_t vpeakCnt=0;vpeakCnt<12;vpeakCnt++)//求对应点的波形峰值大小=模值/(N/2)
-//	{
-//		Vpeak[vpeakCnt]=Vpeak[vpeakCnt]/(NUM_FFT/2);
-//	}
-uint16_t Max, Min;
-uint32_t sum;
-static uint16_t Count = 0;
-Vpeak[Count++] = (uint16_t)(100 * sqrt(FFT_Real[3] * FFT_Real[3] + FFT_Image[3] * FFT_Image[3]));
-if (Count == 30)
-{
-	sum = 0;
-	Max = Vpeak[0];
-	Min = Vpeak[0];
-	for (i = 0; i < Count; i++)
-	{
-		if (Vpeak[i] > Max)
-			Max = Vpeak[i];
-		if (Vpeak[i] < Min)
-			Min = Vpeak[i];
-		sum += Vpeak[i];
-	}
-	Vrms = (sum - Max - Min) / (Count - 2);
-	Vrms = Vrms / 32 / 1.414;
-	Count = 0;
 }
 
-if (Vrms <= 30)
+/*******************************************************************
+函数原型：
+输入参数：
+输出参数：
+函数功能：处理fft转换之后的数据，平方，开方，用于数据判断
+*******************************************************************/
+void FFT_Data_Handle(void)
 {
-	for (uint8_t j = 0; j<36; j++)
+	static uint16_t Vrms[ADC_DMA_SIZE];//均方根电压数组
+	static uint16_t Vpeak[ADC_DMA_SIZE];//峰峰值电压数组
+	Flag_FFT_Handle = 0;
+//	for (uint8_t vrmsCnt = 0; vrmsCnt<NUM_FFT; vrmsCnt++)//求对应点的模值
+//	{
+//		Vrms[vrmsCnt] = (uint16_t)(100*sqrt((fft_Real[vrmsCnt] * fft_Real[vrmsCnt]) + (fft_Image[vrmsCnt] * fft_Image[vrmsCnt])));
+//	}
+//	for (uint8_t vpeakCnt = 0; vpeakCnt<12; vpeakCnt++)//求对应点的波形峰值大小=模值/(N/2)
+//	{
+//		Vpeak[vpeakCnt] = ((Vrms[vpeakCnt] / (NUM_FFT / 2)) / 1.414); //为什么要除以PI(1.414)
+//	}
+
+//	//**************************************************//
+//	//**********************测试用**********************//
+//	Vrms[3] = sqrt((fft_Real[3] * fft_Real[3]) + (fft_Image[3] * fft_Image[3]));
+//	Vpeak[3] = (Vrms[3] / (NUM_FFT / 2)) / 1.414; //为什么要除以PI(1.414)
+//	//********************测试用结束********************//
+//	//**************************************************//
+
+//	//Vpeak是数组，这里要改一下
+//	if (Vpeak[3] <= 30)
+//	{
+//		for (uint8_t j = 0; j<36; j++)
+//		{
+//			data1[PWM1][j] = campFire1_tab1[PWM1][j];
+//			data1[PWM2][j] = campFire1_tab1[PWM2][j];
+//		}
+//	}
+//	else if ((Vpeak[3]>30) && (Vpeak[3] <= 60))
+//	{
+//		for (uint8_t j = 0; j<36; j++)
+//		{
+//			data1[PWM1][j] = campFire1_tab2[PWM1][j];
+//			data1[PWM2][j] = campFire1_tab2[PWM2][j];
+//		}
+//	}
+//	else if ((Vpeak[3]>60) && (Vpeak[3] <= 90))
+//	{
+//		for (uint8_t j = 0; j<36; j++)
+//		{
+//			data1[PWM1][j] = campFire1_tab3[PWM1][j];
+//			data1[PWM2][j] = campFire1_tab3[PWM2][j];
+//		}
+//	}
+//	else if ((Vpeak[3]>90) && (Vpeak[3] <= 120))
+//	{
+//		for (uint8_t j = 0; j<36; j++)
+//		{
+//			data1[PWM1][j] = campFire1_tab4[PWM1][j];
+//			data1[PWM2][j] = campFire1_tab4[PWM2][j];
+//		}
+//	}
+//	else if ((Vpeak[3]>120) && (Vpeak[3] <= 150))
+//	{
+//		for (uint8_t j = 0; j<36; j++)
+//		{
+//			data1[PWM1][j] = campFire1_tab5[PWM1][j];
+//			data1[PWM2][j] = campFire1_tab5[PWM2][j];
+//		}
+//	}
+//	else if ((Vpeak[3]>150) && (Vpeak[3] <= 180))
+//	{
+//		for (uint8_t j = 0; j<36; j++)
+//		{
+//			data1[PWM1][j] = campFire1_tab6[PWM1][j];
+//			data1[PWM2][j] = campFire1_tab6[PWM2][j];
+//		}
+//	}
+//	else if ((Vpeak[3]>180) && (Vpeak[3] <= 210))
+//	{
+//		for (uint8_t j = 0; j<36; j++)
+//		{
+//			data1[PWM1][j] = campFire1_tab7[PWM1][j];
+//			data1[PWM2][j] = campFire1_tab7[PWM2][j];
+//		}
+//	}
+//	else
+//	{
+//		if (Vpeak[3]>210)
+//		{
+//			for (uint8_t j = 0; j<36; j++)
+//			{
+//				data1[PWM1][j] = campFire1_tab8[PWM1][j];
+//				data1[PWM2][j] = campFire1_tab8[PWM2][j];
+//			}
+//		}
+//	}
+}
+
+/*******************************************************************
+函数原型：
+输入参数：
+输出参数：
+*******************************************************************/
+void ScanFFT(void)
+{
+	if (FireSize1 == MODE4_FLASHING)
 	{
-		data1[PWM1][j] = campFire4_tab1[PWM1][j];
-		data1[PWM2][j] = campFire4_tab1[PWM2][j];
+		FFT();
+		FFT_Data_Handle();
 	}
 }
-else if ((Vrms>30) && (Vrms <= 60))
+
+/*******************************************************************
+函数原型：
+输入参数：
+输出参数：把AD采集的数据赋值给fft_Real[NUM_FFT],之所以写成函数，是可以不
+          用再外部声明fft_Real[NUM_FFT]
+*******************************************************************/
+void AD_Assignment(void)
 {
-	for (uint8_t j = 0; j<36; j++)
+	uint8_t i;
+	for (i = 0; i < NUM_FFT; i++)
 	{
-		data1[PWM1][j] = campFire4_tab2[PWM1][j];
-		data1[PWM2][j] = campFire4_tab2[PWM2][j];
+		fft_Real[i] = AdcAudio_Buf[i];
 	}
+	Flag_FFTSwitch=1;
 }
-else if ((Vrms>60) && (Vrms <= 90))
-{
-	for (uint8_t j = 0; j<36; j++)
-	{
-		data1[PWM1][j] = campFire4_tab3[PWM1][j];
-		data1[PWM2][j] = campFire4_tab3[PWM2][j];
-	}
-}
-else if ((Vrms>90) && (Vrms <= 120))
-{
-	for (uint8_t j = 0; j<36; j++)
-	{
-		data1[PWM1][j] = campFire4_tab4[PWM1][j];
-		data1[PWM2][j] = campFire4_tab4[PWM2][j];
-	}
-}
-else if ((Vrms>120) && (Vrms <= 150))
-{
-	for (uint8_t j = 0; j<36; j++)
-	{
-		data1[PWM1][j] = campFire4_tab5[PWM1][j];
-		data1[PWM2][j] = campFire4_tab5[PWM2][j];
-	}
-}
-else if ((Vrms>150) && (Vrms <= 180))
-{
-	for (uint8_t j = 0; j<36; j++)
-	{
-		data1[PWM1][j] = campFire4_tab6[PWM1][j];
-		data1[PWM2][j] = campFire4_tab6[PWM2][j];
-	}
-}
-else if ((Vrms>180) && (Vrms <= 210))
-{
-	for (uint8_t j = 0; j<36; j++)
-	{
-		data1[PWM1][j] = campFire4_tab7[PWM1][j];
-		data1[PWM2][j] = campFire4_tab7[PWM2][j];
-	}
-}
-else
-{
-	if (Vrms>210)
-	{
-		for (uint8_t j = 0; j<36; j++)
-		{
-			data1[PWM1][j] = campFire4_tab8[PWM1][j];
-			data1[PWM2][j] = campFire4_tab8[PWM2][j];
-		}
-	}
-}
-FFT_Real[0] = FFT_Image[0] = 0;  //去掉直流分量，也可以不去掉
-}
+
 
 
 

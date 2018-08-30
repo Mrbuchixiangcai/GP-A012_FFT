@@ -45,4 +45,4 @@ gp-a012\stm32f0xx_it.o: ..\Include\IO_IIC.h
 gp-a012\stm32f0xx_it.o: ..\Include\SN3236.h
 gp-a012\stm32f0xx_it.o: ..\Include\Key.h
 gp-a012\stm32f0xx_it.o: ..\Include\rgb_array.h
-gp-a012\stm32f0xx_it.o: ..\Include\adc_data_js.h
+gp-a012\stm32f0xx_it.o: ..\Include\fft.h

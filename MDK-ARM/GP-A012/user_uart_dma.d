@@ -44,4 +44,4 @@ gp-a012\user_uart_dma.o: ..\Include\IO_IIC.h
 gp-a012\user_uart_dma.o: ..\Include\SN3236.h
 gp-a012\user_uart_dma.o: ..\Include\Key.h
 gp-a012\user_uart_dma.o: ..\Include\rgb_array.h
-gp-a012\user_uart_dma.o: ..\Include\adc_data_js.h
+gp-a012\user_uart_dma.o: ..\Include\fft.h

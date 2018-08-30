@@ -44,6 +44,6 @@ gp-a012\adc.o: ..\Include\IO_IIC.h
 gp-a012\adc.o: ..\Include\SN3236.h
 gp-a012\adc.o: ..\Include\Key.h
 gp-a012\adc.o: ..\Include\rgb_array.h
-gp-a012\adc.o: ..\Include\adc_data_js.h
+gp-a012\adc.o: ..\Include\fft.h
 gp-a012\adc.o: D:\ProgramFiles\Keil_v5\ARM\ARMCC\Bin\..\include\math.h
 gp-a012\adc.o: D:\ProgramFiles\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h

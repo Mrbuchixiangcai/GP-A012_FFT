@@ -10,7 +10,9 @@ uint16_t num_Delay2;//灯光切换到地下一圈亮时延时1s
 uint8_t  num_Delay3;//脉动火焰灯光在切换到下一帧时延迟时间
 uint16_t num_Delay4;
 uint8_t  flashZero_Fade_Out;//灯光在闪动模式没有音乐时灯光亮度渐弱使用变量
-uint16_t volValueData[50];		  //采集到的初步电压值
+uint16_t AdcDma_Buf[ADC_DMA_SIZE];		  //采集到的初步电压值
+uint16_t AdcAudio_Buf[ADC_DMA_SIZE];		  //采集到的初步电压值
+uint16_t volValueData[ADC_DMA_SIZE];		  //采集到的初步电压值
 uint16_t ADCVolValue;
 uint16_t ADCVolValue_bk;
 uint16_t ADCDifferenceValue;
@@ -320,8 +322,9 @@ void Array_CampFire3(void)
 		fireSpeed_Flashing=5;
 	else if((temp_FireSpeed_Flashing==9) || (temp_FireSpeed_Flashing==10))
 		fireSpeed_Flashing=0;
-//	fireSpeed_Flashing=temp_FireSpeed_Flashing+10;//(11-temp_FireSpeed_Flashing);//因为返回的是变化越大，DivideValue()返回的越大，速度越慢，要越小速度才快，所以"10-",
-										   //但因为0-10变化太快，其他连个模式都是15或者22，所以又加10
+//	fireSpeed_Flashing=temp_FireSpeed_Flashing+10;//(11-temp_FireSpeed_Flashing);
+//因为返回的是变化越大，DivideValue()返回的越大，速度越慢，要越小速度才快，所以"10-",
+//但因为0-10变化太快，其他连个模式都是15或者22，所以又加10
 	if(ADCVolValue==0)
 	{
 		num_Delay2++;
@@ -1179,14 +1182,14 @@ void FireMode_Handle(void)
 //				}
 			}
 		}
-		if(Flag_Start_DMA==1)
-		{
-			Flag_Start_DMA=0;
-			if(HAL_ADC_Start_DMA(&hadc, (uint32_t*)volValueData, 10) != HAL_OK)
-			{
-				_Error_Handler(__FILE__, __LINE__);
-			}
-		}
+//kevin 		if(Flag_Start_DMA==1)
+//kevin 		{
+//kevin 			Flag_Start_DMA=0;
+//kevin 			if(HAL_ADC_Start_DMA(&hadc, (uint32_t*)volValueData, 64) != HAL_OK)
+//kevin 			{
+//kevin 				_Error_Handler(__FILE__, __LINE__);
+//kevin 			}
+//kevin 		}
 	}
 //	{
 //		uint8_t zero;

@@ -84,19 +84,19 @@ void Audio_Level_Deal(void)
 		else
 			audio_none_cnt++;	 
 	}
-	if(DengGuang_JieZou_LiangDu != tmp)//节奏呼吸渐变
-	{
-		for(i=0;i<8;i++)
-		{
-			if(DengGuang_JieZou_LiangDu < tmp)	
-				DengGuang_JieZou_LiangDu++;
-		}	
-		for(i=0;i<4;i++)
-		{
-			if(DengGuang_JieZou_LiangDu > tmp)	
-				DengGuang_JieZou_LiangDu--;
-		}	
-	}
+//	if(DengGuang_JieZou_LiangDu != tmp)//节奏呼吸渐变
+//	{
+//		for(i=0;i<8;i++)
+//		{
+//			if(DengGuang_JieZou_LiangDu < tmp)	
+//				DengGuang_JieZou_LiangDu++;
+//		}	
+//		for(i=0;i<4;i++)
+//		{
+//			if(DengGuang_JieZou_LiangDu > tmp)	
+//				DengGuang_JieZou_LiangDu--;
+//		}	
+//	}
 	//DengGuang_JieZou_LiangDu是最终输出值，作亮度信号
 }
 //陈工传过来的，基本不变_end

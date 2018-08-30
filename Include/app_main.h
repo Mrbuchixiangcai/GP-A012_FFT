@@ -14,7 +14,8 @@
 #include "SN3236.h"
 #include "Key.h"
 #include "rgb_array.h"
-#include "adc_data_js.h"
+//#include "adc_data_js.h"
+#include "fft.h"
 
 //宏定义macro definition//
 
@@ -30,9 +31,9 @@ typedef enum
 
 typedef enum
 {
-	PLAY_OFF =0,
-	PLAY_ON	 =1,//蓝牙关
-	PLAY_BT  =2,//蓝牙开
+	PLAY_OFF  = 0,//关机
+	PLAY_ON      ,//开机
+	PLAY_BT      ,//开机且蓝牙开
 }PLAY_MODE;
 
 //变量定义variable definition//
@@ -63,7 +64,7 @@ extern uint8_t   fireSpeed_Big;
 extern uint8_t   fireSpeed_Flashing;
 extern uint8_t   electricityBrightness;
 extern uint8_t   PWMBrightness;
-extern uint8_t   keyBT;
+//extern uint8_t   keyBT;
 
 //
 //外部调用_标志位定义flags definetion//

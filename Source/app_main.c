@@ -15,8 +15,8 @@ uint16_t  cntIdle;
 uint8_t  cntAppTick;
 uint8_t  electricityBrightness;//电流亮度，改变3232芯片26H-49H寄存器的bit1和bit2可以改变电流，进而改变亮度
 uint8_t  PWMBrightness;//PWM亮度，改变PWM亮度改变
-uint8_t  keyBT;
-uint8_t  keyBT_bk;
+//uint8_t  keyBT;
+//uint8_t  keyBT_bk;
 
 
 
@@ -35,6 +35,13 @@ uint8_t  fireSpeed_Big;
 uint8_t  fireSpeed_Flashing;
 uint8_t  bt_fire;
 
+//函数定义function definetion//
+/*******************************************************************
+函数原型：
+输入参数：
+输出参数：
+函数功能：
+*******************************************************************/
 void User_GPIO_DeInit(void) //端口初始化函数
 {
 	GPIO_InitTypeDef GPIO_InitStruct; //定义一个端口初始化结构体变量类型，用以初始化需要用到的端口
@@ -91,6 +98,12 @@ void User_GPIO_DeInit(void) //端口初始化函数
   HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
 }
 
+/*******************************************************************
+函数原型：
+输入参数：
+输出参数：
+函数功能：
+*******************************************************************/
 //void SysEnter_Idle(void)
 //{
 //	if(PlayMode==PLAY_OFF)
@@ -122,7 +135,14 @@ void User_GPIO_DeInit(void) //端口初始化函数
 //	}  
 //	else
 //	 	cntIdle=0;
-//}           
+//}
+
+/*******************************************************************
+函数原型：
+输入参数：
+输出参数：
+函数功能：
+*******************************************************************/
 void SysEnter_Idle(void)
 {
 	if(PlayMode==PLAY_OFF)
@@ -159,8 +179,64 @@ void SysEnter_Idle(void)
 	}  
 	else
 	 	cntIdle=0;
-}    
+}
 
+/*******************************************************************
+函数原型：
+输入参数：
+输出参数：
+函数功能：如果开机会在PA0口接收到高电平
+*******************************************************************/
+void IoT_ON(void)
+{
+	/*keyBT = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0);
+	if (keyBT_bk != keyBT)
+	{
+		keyBT_bk = keyBT;
+		if (keyBT == 1)
+			PlayMode = PLAY_BT;
+		else
+		{
+			PlayMode = PLAY_OFF;
+			FireSize1 = MODE0_OFF_FIRE;
+		}
+	}*/
+}
+
+/*******************************************************************
+函数原型：
+输入参数：
+输出参数：
+函数功能：
+*******************************************************************/
+void IoT_OFF(void)
+{
+	PlayMode = PLAY_OFF;
+	FireSize1 = MODE0_OFF_FIRE;
+	keyNum = 0;
+}
+
+/*******************************************************************
+函数原型：
+输入参数：
+输出参数：
+函数功能：
+*******************************************************************/
+void Scan_IoT_OFF(void)
+{
+	if (PlayMode == PLAY_OFF)
+	{
+		FireSize1 = MODE0_OFF_FIRE;
+		keyNum = 0;
+	}
+}
+
+/*******************************************************************
+函数原型：
+输入参数：
+输出参数：
+函数功能：
+*******************************************************************/
 void PowerON_Reset(void)
 {
 	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_15,GPIO_PIN_SET);
@@ -178,7 +254,12 @@ void PowerON_Reset(void)
 	PlayMode=PLAY_ON;
 }
 
-//函数定义function definetion//
+/*******************************************************************
+函数原型：
+输入参数：
+输出参数：
+函数功能：
+*******************************************************************/
 void app_main(void)
 {
 	PowerON_Reset();
@@ -187,70 +268,62 @@ void app_main(void)
 		if(AppTick1ms)
 		{
 			AppTick1ms=0;
-			keyBT=HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0);
-			if(keyBT_bk!=keyBT)
-			{
-				keyBT_bk=keyBT;
-				if(keyBT==1)
-					PlayMode=PLAY_BT;
-				else 
-				{
-					PlayMode=PLAY_OFF;
-					FireSize1=MODE0_OFF_FIRE;
-				}
-			}
-//			if(FireSize1==MODE4_FLASHING)
-//			{
-//					if(HAL_ADC_Start_DMA(&hadc, (uint32_t*)volValueData, 50) != HAL_OK)
-//					{
-//						_Error_Handler(__FILE__, __LINE__);
-//					}
-//			}
-//			else
-//				HAL_ADC_Stop_DMA(&hadc);
-			
+			IoT_ON();
+			ADCGetBuffer();
 		}
 		if(AppTick0)
 		{
 			AppTick0=0;
 			KeyScan();
 			KeyComMsg();
-			if(FireSize1==MODE4_FLASHING)
-			{
-//					if(HAL_ADC_Start_DMA(&hadc, (uint32_t*)volValueData, 50) != HAL_OK)
-//					{
-//						_Error_Handler(__FILE__, __LINE__);
-//					}
-			}
-			else
-				HAL_ADC_Stop_DMA(&hadc);
 		}
 		if(AppTick1)
 		{
 			AppTick1=0;
 			BlueMode_Handle();
-			
 		}
 		if(AppTick2)
 		{
 			AppTick2=0;
-			
-			//Array_CampFire();
-//			Array_CampFire2();
-//			FireMode_Handle();
+			FireMode_Handle();
 		}
-		if(AppTick3)
+		if(AppTick3 )
 		{
 			AppTick3=0;
 			RGBMode_Handle();
-//			GetVoltageValue();
-//			SysEnter_Idle();
+			Scan_IoT_OFF();
 		}
-//		if(AppTick5)
+		if(AppTick5)
+		{
+			AppTick5 = 0;
+			ScanFFT();
+		}
+//		if(AppTick1ms)
 //		{
-//			AppTick5=0;
-//			
+//			AppTick1ms=0;
+//			ADCGetBuffer();
 //		}
+//		if(AppTick0)
+//		{
+//			AppTick0=0;
+//		}
+//		if(AppTick1)
+//		{
+//			AppTick1=0;
+//		}
+//		if(AppTick2)
+//		{
+//			AppTick2=0;
+//		}
+//		if(AppTick3)// ||（AppTick4）//因为fft转换时间长，所以要单独占用2个ms
+//		{
+//			AppTick3=0;
+//		}
+//		if (AppTick5)
+//		{
+//		}
+//		FFT();
+//		FFT_Data_Handle();
 	}
 }
 

@@ -183,8 +183,7 @@ void Usart1SendData_DMA(uint8_t *pdata) {
   //	UsartType1.Flag_DMASend=USART_DMA_SENDING;
   //	HAL_UART_Transmit_DMA(&huart1,pdata,Length);
   uint8_t len = 0;
-  while (*pdata !=
-         '\0') //字符串结束符，程序在见到第一个'\0'时就会认为该字符串结束了
+  while (*pdata !='\0') //字符串结束符，程序在见到第一个'\0'时就会认为该字符串结束了
   {            //没条字符串后面紧跟一个隐形 '\0'
     Uart1_TransmitBuffer[len] = *pdata; //一次只能赋值一个字符
     len++;
@@ -192,15 +191,13 @@ void Usart1SendData_DMA(uint8_t *pdata) {
   }
   //	if((*str == '\0') && (UsartType1.Flag_DMASend==USART_DMA_SENDING))
   //		UsartType1.Flag_DMASend=USART_DMA_SENDOVER;
-  User_UART_Transmit_DMAStop(
-      &huart1); //可能是判断此时是不是有数据发送，有就等下
+  User_UART_Transmit_DMAStop(&huart1); //可能是判断此时是不是有数据发送，有就等下
   HAL_UART_Transmit_DMA(&huart1, Uart1_TransmitBuffer, len); //调用串口发送函数
 }
 // DMA发送完成中断回调函数
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
-  __HAL_DMA_DISABLE(
-      huart
-          ->hdmatx); //发送完才能进入回调函数，不然进不了，所以设置为停止发送是可以的
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) 
+{
+  __HAL_DMA_DISABLE(huart->hdmatx); //发送完才能进入回调函数，不然进不了，所以设置为停止发送是可以的
   //	UsartType1.Flag_DMASend=USART_DMA_SENDOVER;
 }
 

@@ -70,14 +70,14 @@ void MX_ADC_Init(void) {
 	hadc.Instance = ADC1;
 	hadc.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
 	hadc.Init.Resolution = ADC_RESOLUTION_12B;
-	hadc.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-	hadc.Init.ScanConvMode = ADC_SCAN_DIRECTION_FORWARD;
+	hadc.Init.DataAlign = ADC_DATAALIGN_RIGHT;//对齐方式,ADC为12位中，右对齐方式 ADC_ALIGN=0;
+	hadc.Init.ScanConvMode = DISABLE;////关闭扫描模式 因为只有一个通道,ADC_SCAN_DIRECTION_FORWARD;
 	hadc.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
 	hadc.Init.LowPowerAutoWait = DISABLE;
 	hadc.Init.LowPowerAutoPowerOff = DISABLE;
-	hadc.Init.ContinuousConvMode = ENABLE;
+	hadc.Init.ContinuousConvMode = ENABLE; //触发一次，后续的转换就会永不停歇（除非CONT清0），
 	hadc.Init.DiscontinuousConvMode = DISABLE;
-	hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+	hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;//软件转换模式
 	hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
 	hadc.Init.DMAContinuousRequests = ENABLE;
 	hadc.Init.Overrun = ADC_OVR_DATA_PRESERVED;
@@ -89,13 +89,17 @@ void MX_ADC_Init(void) {
 	*/
 	sConfig.Channel = ADC_CHANNEL_1;
 	sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
-	sConfig.SamplingTime = ADC_SAMPLETIME_7CYCLES_5;
+	sConfig.SamplingTime = ADC_SAMPLETIME_71CYCLES_5;//ADC_SAMPLETIME_7CYCLES_5;
 	if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK) {
 		_Error_Handler(__FILE__, __LINE__);
 	}
 
 	// ADC校准
 	if (HAL_ADCEx_Calibration_Start(&hadc) != HAL_OK) {
+		_Error_Handler(__FILE__, __LINE__);
+	}
+	if (HAL_ADC_Start_DMA(&hadc, (uint32_t*)AdcDma_Buf, ADC_DMA_SIZE) != HAL_OK)
+	{
 		_Error_Handler(__FILE__, __LINE__);
 	}
 }
@@ -116,6 +120,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef *adcHandle) {
 		GPIO_InitStruct.Pin = GPIO_PIN_1;
 		GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
 		GPIO_InitStruct.Pull = GPIO_NOPULL;
+		//GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 		HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 		/* USER CODE BEGIN ADC1_MspInit 1 */
@@ -123,12 +128,12 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef *adcHandle) {
 
 		hdma_adc.Instance = DMA1_Channel1;
 		hdma_adc.Init.Direction = DMA_PERIPH_TO_MEMORY;
-		hdma_adc.Init.PeriphInc = DMA_PINC_DISABLE;
-		hdma_adc.Init.MemInc = DMA_MINC_ENABLE;
-		hdma_adc.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-		hdma_adc.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
-		hdma_adc.Init.Mode = DMA_CIRCULAR;
-		hdma_adc.Init.Priority = DMA_PRIORITY_MEDIUM;
+		hdma_adc.Init.PeriphInc = DMA_PINC_DISABLE;//接收一次数据后，设备地址禁止后移
+		hdma_adc.Init.MemInc = DMA_MINC_ENABLE;//关闭接收一次数据后，目标内存地址后移
+		hdma_adc.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;//定义外设数据宽度为16位
+		hdma_adc.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;//DMA搬移数据尺寸，HalfWord就是为16位
+		hdma_adc.Init.Mode = DMA_CIRCULAR;  //循环转换模式
+		hdma_adc.Init.Priority = DMA_PRIORITY_MEDIUM; //DMA优先级
 		if (HAL_DMA_Init(&hdma_adc) != HAL_OK) {
 			_Error_Handler(__FILE__, __LINE__);
 		}
@@ -160,26 +165,52 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef *adcHandle) {
 }
 
 /* USER CODE BEGIN 1 */
+uint8_t Adc_Dma_Irq_f;
 void ADCGetBuffer(void) //在中断里面调用，然后中断处理结束进入这里出具求平均
 {
-	uint8_t i;
-	uint32_t sumADC_Value; //
-
-						   //	if(HAL_IS_BIT_SET(HAL_ADC_GetState(&hadc), HAL_ADC_STATE_REG_EOC))
-						   //	{
-	if (HAL_ADC_Stop_DMA(&hadc) != HAL_OK) {
-		_Error_Handler(__FILE__, __LINE__);
+	uint16_t i;
+	//uint32_t sumADC_Value; //
+	if (Adc_Dma_Irq_f)
+	{
+		if (HAL_IS_BIT_SET(HAL_ADC_GetState(&hadc), HAL_ADC_STATE_REG_EOC))
+		{
+			Adc_Dma_Irq_f = 0;
+			if (HAL_ADC_Stop_DMA(&hadc) != HAL_OK)
+			{
+				_Error_Handler(__FILE__, __LINE__);
+			}
+			for (i = 0; i < ADC_DMA_SIZE; i++)
+				AdcAudio_Buf[i] = AdcDma_Buf[i] - 0x0400;//减0x0400是因为最低音量时仍有0x0420左右
+			AD_Assignment();
+			if (HAL_ADC_Start_DMA(&hadc, (uint32_t*)AdcDma_Buf, ADC_DMA_SIZE) != HAL_OK)
+			{
+				_Error_Handler(__FILE__, __LINE__);
+			}
+		}
+		
 	}
-	for (i = 0; i < 6; i++) {
-		sumADC_Value = volValueData[i] + sumADC_Value;
-	}
-	ADCVolValue = sumADC_Value / 6;
-	// ADCVolValue=(ADCVolValue<=0x0030)?0:ADCVolValue;
-	//		adc_pj_data=ADCVolValue;
-	ADCDifferenceValue = ADCVolValue; // abs((ADCVolValue-ADCVolValue_bk));
-	ADCVolValue_bk = ADCVolValue;
-	Flag_ADCGetFinished = 1;
-	//	}
+	//kevin 	if((HAL_IS_BIT_SET(HAL_ADC_GetState(&hadc), HAL_ADC_STATE_REG_EOC)) && (Flag_FFTSwitch==0))//Flag_FFTSwitch是fft转换完成开关
+	//kevin 	{
+	//kevin 		if (HAL_ADC_Stop_DMA(&hadc) != HAL_OK) 
+	//kevin 		{
+	//kevin 			_Error_Handler(__FILE__, __LINE__);
+	//kevin 		}
+	//kevin 		
+	//kevin 		//for (i = 0; i < 6; i++) 
+	//kevin 		//{
+	//kevin 		//	sumADC_Value = volValueData[i] + sumADC_Value;
+	//kevin 		//}
+	//kevin 		//ADCVolValue = sumADC_Value / 6;
+	//kevin 		//// ADCVolValue=(ADCVolValue<=0x0030)?0:ADCVolValue;
+	//kevin 		////		adc_pj_data=ADCVolValue;
+	//kevin 		//ADCDifferenceValue = ADCVolValue; // abs((ADCVolValue-ADCVolValue_bk));
+	//kevin 		//ADCVolValue_bk = ADCVolValue;
+	//kevin 		Flag_FFTSwitch = 1;
+	//kevin 		if (HAL_ADC_Start_DMA(&hadc, (uint32_t*)volValueData, 64) != HAL_OK)
+	//kevin 		{
+	//kevin 			_Error_Handler(__FILE__, __LINE__);
+	//kevin 		}
+	//kevin 	}
 }
 /* USER CODE END 1 */
 
