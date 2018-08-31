@@ -77,7 +77,7 @@ I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr.h)(0x5B3D75A4)
 I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr_ex.h)(0x5B3D75A4)
 I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart.h)(0x5B3D75A4)
 I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h)(0x5B3D75A4)
-F (../Src/adc.c)(0x5B87CC26)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I ../Drivers/CMSIS/Include -I ..\Include-I.\RTE\_GP-A012-ID:\ProgramFiles\Keil_v5\ARM\PACK\ARM\CMSIS\5.3.0\CMSIS\Include-ID:\ProgramFiles\Keil_v5\ARM\PACK\Keil\STM32F0xx_DFP\2.0.0\Drivers\CMSIS\Device\ST\STM32F0xx\Include-D__UVISION_VERSION="525" -D_RTE_ -DSTM32F030x6 -DUSE_HAL_DRIVER -DSTM32F030x6-o gp-a012\adc.o --omf_browse gp-a012\adc.crf --depend gp-a012\adc.d)
+F (../Src/adc.c)(0x5B889A3B)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I ../Drivers/CMSIS/Include -I ..\Include-I.\RTE\_GP-A012-ID:\ProgramFiles\Keil_v5\ARM\PACK\ARM\CMSIS\5.3.0\CMSIS\Include-ID:\ProgramFiles\Keil_v5\ARM\PACK\Keil\STM32F0xx_DFP\2.0.0\Drivers\CMSIS\Device\ST\STM32F0xx\Include-D__UVISION_VERSION="525" -D_RTE_ -DSTM32F030x6 -DUSE_HAL_DRIVER -DSTM32F030x6-o gp-a012\adc.o --omf_browse gp-a012\adc.crf --depend gp-a012\adc.d)
 I (../Inc/adc.h)(0x5B6BE190)
 I (../Inc/main.h)(0x5B6BE3BB)
 I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h)(0x5B3D75A3)
@@ -1227,7 +1227,7 @@ I (..\Include\SN3236.h)(0x5AF3B03D)
 I (..\Include\Key.h)(0x5B875C37)
 I (..\Include\rgb_array.h)(0x5B2DCD91)
 I (..\Include\fft.h)(0x5B87AEB7)
-F (..\Source\FFT.c)(0x5B87CBED)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I ../Drivers/CMSIS/Include -I ..\Include-I.\RTE\_GP-A012-ID:\ProgramFiles\Keil_v5\ARM\PACK\ARM\CMSIS\5.3.0\CMSIS\Include-ID:\ProgramFiles\Keil_v5\ARM\PACK\Keil\STM32F0xx_DFP\2.0.0\Drivers\CMSIS\Device\ST\STM32F0xx\Include-D__UVISION_VERSION="525" -D_RTE_ -DSTM32F030x6 -DUSE_HAL_DRIVER -DSTM32F030x6-o gp-a012\fft.o --omf_browse gp-a012\fft.crf --depend gp-a012\fft.d)
+F (..\Source\FFT.c)(0x5B889C5C)(--c99 -c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I ../Drivers/CMSIS/Include -I ..\Include-I.\RTE\_GP-A012-ID:\ProgramFiles\Keil_v5\ARM\PACK\ARM\CMSIS\5.3.0\CMSIS\Include-ID:\ProgramFiles\Keil_v5\ARM\PACK\Keil\STM32F0xx_DFP\2.0.0\Drivers\CMSIS\Device\ST\STM32F0xx\Include-D__UVISION_VERSION="525" -D_RTE_ -DSTM32F030x6 -DUSE_HAL_DRIVER -DSTM32F030x6-o gp-a012\fft.o --omf_browse gp-a012\fft.crf --depend gp-a012\fft.d)
 I (..\Include\app_main.h)(0x5B87665C)
 I (D:\ProgramFiles\Keil_v5\ARM\ARMCC\include\string.h)(0x599ECD2C)
 I (../Inc/dma.h)(0x5B6BE1AC)

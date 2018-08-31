@@ -42,6 +42,9 @@
 uint16_t fft_Real[NUM_FFT]; //FFT实部，64数组
 uint16_t fft_Image[NUM_FFT];//FFT虚部，64数组
 uint8_t  calculateSW = 0;   //计算转换
+uint8_t  temp_fft1, temp_fft2, temp_fft3, temp_fft4, temp_fft5;
+volatile uint16_t Vrms[ADC_DMA_SIZE];//均方根电压数组
+volatile uint16_t Vpeak[ADC_DMA_SIZE];//峰峰值电压数组
 
 
 /*************************************************************************************
@@ -145,8 +148,8 @@ void FFT(void)
 		{
 			b = 1;
 			b <<= (i - 1); //蝶式运算，用于计算隔多少行计算，例如第一级1和2行计算，，，，第二级
-			for (j = 0; j <= (b - 1); b++)
-			{这里错了
+			for (j = 0; j <= (b - 1); j++)//b++)
+			{
 				p = 1;
 				p <<= (L - i);
 				p = p * j;
@@ -164,7 +167,12 @@ void FFT(void)
 					fft_Image[k] >>= 1;
 					fft_Real[k + b]  >>= 1;
 					fft_Image[k + b] >>= 1;
-					calculateSW=p;
+					temp_fft1=i;
+					temp_fft2=b;
+					temp_fft3=j;
+					temp_fft4=p;
+					temp_fft5=k;
+					calculateSW=0;
 				}
 			}
 		}
@@ -183,17 +191,16 @@ void FFT(void)
 *******************************************************************/
 void FFT_Data_Handle(void)
 {
-	static uint16_t Vrms[ADC_DMA_SIZE];//均方根电压数组
-	static uint16_t Vpeak[ADC_DMA_SIZE];//峰峰值电压数组
+	
 	Flag_FFT_Handle = 0;
-//	for (uint8_t vrmsCnt = 0; vrmsCnt<NUM_FFT; vrmsCnt++)//求对应点的模值
-//	{
-//		Vrms[vrmsCnt] = (uint16_t)(100*sqrt((fft_Real[vrmsCnt] * fft_Real[vrmsCnt]) + (fft_Image[vrmsCnt] * fft_Image[vrmsCnt])));
-//	}
-//	for (uint8_t vpeakCnt = 0; vpeakCnt<12; vpeakCnt++)//求对应点的波形峰值大小=模值/(N/2)
-//	{
-//		Vpeak[vpeakCnt] = ((Vrms[vpeakCnt] / (NUM_FFT / 2)) / 1.414); //为什么要除以PI(1.414)
-//	}
+	for (uint8_t vrmsCnt = 0; vrmsCnt<NUM_FFT; vrmsCnt++)//求对应点的模值
+	{
+		Vrms[vrmsCnt] = (uint16_t)(sqrt((fft_Real[vrmsCnt] * fft_Real[vrmsCnt]) + (fft_Image[vrmsCnt] * fft_Image[vrmsCnt])));
+	}
+	for (uint8_t vpeakCnt = 0; vpeakCnt<NUM_FFT; vpeakCnt++)//求对应点的波形峰值大小=模值/(N/2)
+	{
+ 		Vpeak[vpeakCnt] = ((Vrms[vpeakCnt] / (NUM_FFT / 2)) / 1.414); //为什么要除以PI(1.414)
+	}
 
 //	//**************************************************//
 //	//**********************测试用**********************//

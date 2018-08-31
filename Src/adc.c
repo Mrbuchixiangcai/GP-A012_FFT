@@ -89,7 +89,7 @@ void MX_ADC_Init(void) {
 	*/
 	sConfig.Channel = ADC_CHANNEL_1;
 	sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
-	sConfig.SamplingTime = ADC_SAMPLETIME_71CYCLES_5;//ADC_SAMPLETIME_7CYCLES_5;
+	sConfig.SamplingTime = ADC_SAMPLETIME_7CYCLES_5;
 	if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK) {
 		_Error_Handler(__FILE__, __LINE__);
 	}
@@ -120,7 +120,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef *adcHandle) {
 		GPIO_InitStruct.Pin = GPIO_PIN_1;
 		GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
 		GPIO_InitStruct.Pull = GPIO_NOPULL;
-		//GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+		GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 		HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 		/* USER CODE BEGIN ADC1_MspInit 1 */
@@ -170,7 +170,7 @@ void ADCGetBuffer(void) //在中断里面调用，然后中断处理结束进入这里出具求平均
 {
 	uint16_t i;
 	//uint32_t sumADC_Value; //
-	if (Adc_Dma_Irq_f)
+	if ((Adc_Dma_Irq_f) && (Flag_FFTSwitch == 0) && (FireSize1 == MODE4_FLASHING))
 	{
 		if (HAL_IS_BIT_SET(HAL_ADC_GetState(&hadc), HAL_ADC_STATE_REG_EOC))
 		{
